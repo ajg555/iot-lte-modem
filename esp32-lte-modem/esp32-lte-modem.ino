@@ -1,128 +1,150 @@
-#include <PPP.h>
+/*
+  Code for ESP32 uC family
+  Modem: SIMCom A7608SA-H
+  HTTP (only) test application 
+  HTTPS not support on TinyGsm yet for this module (09/2025) - https://github.com/vshymanskyy/TinyGSM/tree/master  
+  WARNING: DO NOT USE THE MODULE WITHOUT AN ANTENNA!!!
+*/
 
-#define PPP_MODEM_APN "zap.vivo.com.br"
-#define PPP_MODEM_PIN "0000"  // or NULL
+// ========== BOARD SETUP =====================
+#define UART_BAUD               115200
+#define PIN_TX                  17
+#define PIN_RX                  16
+#define PWR_PIN                 26
 
-// ESP32 BOARD
-#define ESP32_DEV_KIT_1
+// ========== MACROS AND CONSTANTS ============
+#define HTTP_SERVER             "example.com"
+#define HTTP_PORT               80
+#define HTTP_RESOURCE           "/"
 
-#ifdef ESP32_DEV_KIT_1
-  #define MODEM_SERIAL    2
-  #define MODEM_BAUDRATE  115200
-  #define MODEM_TX        17
-  #define MODEM_RX        16
-  #define MODEM_SLEEP     25
+// ========== MODEM SETUP =====================
+#define TINY_GSM_MODEM_SIM7600
+#define TINY_GSM_RX_BUFFER      1024
+#define ISP_CLARO               0x01
+#define ISP_OI                  0x02
+#define ISP_VIVO                0x03
+#define ISP_OI                  0x04
+#define APN_ISP                 ISP_VIVO
+#if APN_ISP == ISP_CLARO
+  #define APN_NAME              "claro.com.br"
+  #define APN_USER              "claro"
+  #define APN_PASSWD            "claro"
+#elif APN_ISP == ISP_OI
+  #define APN_NAME              "gprs.oi.com.br"
+  #define APN_USER              "oi"
+  #define APN_PASSWD            "oi"
+#elif APN_ISP == ISP_TIM
+  #define APN_NAME              "timbrasil.br"
+  #define APN_USER              "tim"
+  #define APN_PASSWD            "tim"
+#elif APN_ISP == ISP_VIVO
+  #define APN_NAME              "zap.vivo.com.br"
+  #define APN_USER              "vivo"
+  #define APN_PASSWD            "vivo"
 #else
-  #error "Invalid BOARD GPIO setup!"
+  #error "APN settings missing!"
 #endif
 
-// SIMCom A7608SA-H basic module with just TX,RX and RST
-#define PPP_MODEM_TX      MODEM_TX
-#define PPP_MODEM_RX      MODEM_RX
-#define PPP_MODEM_RTS     -1
-#define PPP_MODEM_CTS     -1
-#define PPP_MODEM_FC      ESP_MODEM_FLOW_CONTROL_NONE
-#define PPP_MODEM_MODEL   PPP_MODEM_GENERIC
+#define SIM_PIN                 "0000"
+#define SerialModem             Serial1
 
-void onEvent(arduino_event_id_t event, arduino_event_info_t info) {
-  switch (event) {
-    case ARDUINO_EVENT_PPP_START:        Serial.println("PPP Started"); break;
-    case ARDUINO_EVENT_PPP_CONNECTED:    Serial.println("PPP Connected"); break;
-    case ARDUINO_EVENT_PPP_GOT_IP:       Serial.println("PPP Got IP"); break;
-    case ARDUINO_EVENT_PPP_LOST_IP:      Serial.println("PPP Lost IP"); break;
-    case ARDUINO_EVENT_PPP_DISCONNECTED: Serial.println("PPP Disconnected"); break;
-    case ARDUINO_EVENT_PPP_STOP:         Serial.println("PPP Stopped"); break;
-    default:                             break;
-  }
+// ========== LIBRARIES =======================
+#include <TinyGsmClient.h>
+#include <ArduinoHttpClient.h>
+
+// ========== function prototypes =============
+void modemPowerOn();
+void modemPowerOff();
+void modemRestart();
+
+// ========== global variables ================
+
+// ========== objects =========================
+TinyGsm modem(SerialModem);
+TinyGsmClient client(modem);
+HttpClient http(client, HTTP_SERVER, HTTP_PORT);
+
+
+// ========== initial setup ===================
+void setup(){
+  Serial.begin(115200);
+  delay(10);
+
+  modemPowerOn();
+
+  SerialModem.begin(UART_BAUD, SERIAL_8N1, PIN_RX, PIN_TX);
+  delay(6000);
+
+  Serial.println("Initializing modem...");
+  modem.restart();
+  modemRestart();
+  // modem.init();
+
+  delay(5000);
+
+  Serial.print("Modem Info: ");
+  Serial.println(modem.getModemInfo());
+
 }
 
-void testClient(const char *host, uint16_t port) {
-  NetworkClient client;
-  if (!client.connect(host, port)) {
-    Serial.println("Connection Failed");
+// ========== MAIN CODE =======================
+void loop(){
+
+  modem.gprsConnect(APN_NAME, APN_USER, APN_PASSWD);
+
+  Serial.print("Waiting for network...");
+  while (!modem.waitForNetwork()) {
+    Serial.println(" failed");
+    delay(1000);
+  }
+  Serial.println(" ok");
+  
+  Serial.print("HTTP GET request... ");
+  int err = http.get(HTTP_RESOURCE);
+  if (err != 0) {
+    Serial.print("GET request failed: ");
+    Serial.println(err);
+    delay(10000);
     return;
   }
-  client.printf("GET / HTTP/1.1\r\nHost: %s\r\n\r\n", host);
-  while (client.connected() && !client.available());
-  while (client.available()) {
-    client.read();  //Serial.write(client.read());
-  }
 
-  Serial.println("Connection Success");
-  client.stop();
+  int status = http.responseStatusCode();
+  Serial.print("Status: ");
+  Serial.println(status);
+
+  String body = http.responseBody();
+  Serial.println("Response:");
+  Serial.println(body);
+
+  http.stop();
+  Serial.println("Connection closed!");
+  
+  while (true) {delay(1000);}
 }
 
-void setup() {
-  Serial.begin(115200);
-
-  // Listen for modem events
-  Network.onEvent(onEvent);
-
-  // Configure the modem
-  PPP.setApn(PPP_MODEM_APN);
-  //PPP.setPin(PPP_MODEM_PIN);
-  //PPP.setResetPin(PPP_MODEM_RST, PPP_MODEM_RST_LOW, PPP_MODEM_RST_DELAY);
-  PPP.setPins(PPP_MODEM_TX, PPP_MODEM_RX, PPP_MODEM_RTS, PPP_MODEM_CTS, PPP_MODEM_FC);
-
-  Serial.println("Starting the modem. It might take a while!");
-  PPP.begin(PPP_MODEM_MODEL);
-
-  Serial.print("Manufacturer: ");
-  Serial.println(PPP.cmd("AT+CGMI", 10000));
-  Serial.print("Model: ");
-  Serial.println(PPP.moduleName());
-  Serial.print("IMEI: ");
-  Serial.println(PPP.IMEI());
-
-  bool attached = PPP.attached();
-  if (!attached) {
-    int i = 0;
-    unsigned int s = millis();
-    Serial.print("Waiting to connect to network");
-    while (!attached && ((++i) < 600)) {
-      Serial.print(".");
-      delay(100);
-      attached = PPP.attached();
-    }
-    Serial.print((millis() - s) / 1000.0, 1);
-    Serial.println("s");
-    attached = PPP.attached();
-  }
-
-  Serial.print("Attached: ");
-  Serial.println(attached);
-  Serial.print("State: ");
-  Serial.println(PPP.radioState());
-  if (attached) {
-    Serial.print("Operator: ");
-    Serial.println(PPP.operatorName());
-    Serial.print("IMSI: ");
-    Serial.println(PPP.IMSI());
-    Serial.print("RSSI: ");
-    Serial.println(PPP.RSSI());
-    int ber = PPP.BER();
-    if (ber > 0) {
-      Serial.print("BER: ");
-      Serial.println(ber);
-      Serial.print("NetMode: ");
-      Serial.println(PPP.networkMode());
-    }
-
-    Serial.println("Switching to data mode...");
-    PPP.mode(ESP_MODEM_MODE_CMUX);  // Data and Command mixed mode
-    if (!PPP.waitStatusBits(ESP_NETIF_CONNECTED_BIT, 1000)) {
-      Serial.println("Failed to connect to internet!");
-    } else {
-      Serial.println("Connected to internet!");
-    }
-  } else {
-    Serial.println("Failed to connect to network!");
-  }
+// ========== FUNC. IMPLEMENTATION ============
+void modemPowerOn() {
+  pinMode(PWR_PIN, OUTPUT);
+  digitalWrite(PWR_PIN, LOW);
+  delay(1000);
+  digitalWrite(PWR_PIN, HIGH);
 }
 
-void loop() {
-  if (PPP.connected()) {
-    testClient("google.com", 80);
-  }
-  delay(20000);
+void modemPowerOff(){
+  pinMode(PWR_PIN, OUTPUT);
+  digitalWrite(PWR_PIN, LOW);
+  delay(1500);
+  digitalWrite(PWR_PIN, HIGH);
 }
+
+void modemRestart(){
+  modemPowerOff();
+  delay(1000);
+  modemPowerOn();
+}
+
+// ========== SOURCES =========================
+/*
+ * https://github.com/vshymanskyy/TinyGSM/blob/master/examples/HttpClient/HttpClient.ino
+ * https://randomnerdtutorials.com/esp32-https-requests-sim-card-sim7000g/
+*/
