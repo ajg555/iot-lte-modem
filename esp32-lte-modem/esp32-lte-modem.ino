@@ -19,7 +19,7 @@
 // ========== global variables ================
 
 // ========== objects =========================
-HttpClient http(client, HTTP_SERVER, HTTP_PORT);
+HttpClient http(gsmClient, HTTP_SERVER, HTTP_PORT);
 
 
 // ========== initial setup ===================

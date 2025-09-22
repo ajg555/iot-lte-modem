@@ -4,7 +4,7 @@
 
 // ========== objects =========================
 TinyGsm modem(SerialModem);
-TinyGsmClient client(modem);
+TinyGsmClient gsmClient(modem);
 
 
 // ========== FUNC. IMPLEMENTATION ============

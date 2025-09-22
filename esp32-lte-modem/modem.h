@@ -58,7 +58,7 @@
 
 // ========== objects =========================
 extern TinyGsm modem;
-extern TinyGsmClient client;
+extern TinyGsmClient gsmClient;
 
 
 // ========== function prototypes =============
@@ -68,25 +68,6 @@ void modemPowerOn();
 void modemPowerOff();
 void modemRestart();
 void modemSetup();
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 #endif // MODEM_H
