@@ -3,16 +3,7 @@
 #define MQTTCLIENT_H
 
 
-// ========== INCLUSAO DAS BIBLIOTECAS ========
-//#include "env.h"
-//#include "wifisetup.h"
-#include "modem.h"
-#include<ArduinoJson.h>
-#include<PubSubClient.h>
-#include<string.h>
-
-
-// ========== Macros e constantes ==========
+// ========== MQTT SETUP ======================
 #ifndef MQTT_PORT
   #define MQTT_PORT                     1883
 #endif
@@ -53,25 +44,21 @@
 
 #define JSON_DOCUMENT_SIZE              256
 
-// ========== structs ======================
-typedef struct{                                                       
-  char      parameter[MQTT_JSON_KEY_MAX_SIZE];
-  uint16_t  value,
-            address;
-} MqttJsonLoRaSet;
+// ========== LIBRARIES =======================
+//#include "env.h"
+#include "modem.h"
+#include<ArduinoJson.h>
+#include<PubSubClient.h>
+#include<string.h>
 
-// ========== enumeradores =================
+// ========== objects =========================
 
-// ========== constantes ===================
-
-// ========== Variaveis globais ============
-
-// ========== Prototipos das Funcoes ========
-
+// ========== function prototypes =============
 void callback(char* topic, byte* message, unsigned int length);       
 void mqttSetup();                                                     
 void mqttSubscribe(char *topic);
 void mqttConnect();                                                   
 void mqttPublish(char *topic, char *payload, uint8_t retain);
+
 
 #endif                                                                // MQTTCLIENT_H

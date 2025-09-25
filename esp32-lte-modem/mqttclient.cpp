@@ -3,7 +3,7 @@
 #include "mqttclient.h"
 
 // ========== Variaveis globais =============
-PubSubClient mqttClient(MQTT_SERVER, MQTT_PORT, callback, gsmClient);                    // callback: mqtt topic's receive messages
+PubSubClient mqttClient(MQTT_SERVER, MQTT_PORT, callback, gsmClient);               // callback: mqtt topic's receive messages
 
 // ========== inicializacao das vars ========
 
@@ -12,7 +12,7 @@ void mqttSetup() {
   mqttClient.setServer(MQTT_SERVER, MQTT_PORT);                                       
   mqttClient.setCallback(callback);                                                   
   mqttClient.setKeepAlive(MQTT_KEEPALIVE);                                            
-  mqttClient.setSocketTimeout(MQTT_TIMEOUT);                                          
+  mqttClient.setSocketTimeout(MQTT_TIMEOUT);                                        
 }
 
 void mqttConnect() {
@@ -29,7 +29,9 @@ void mqttConnect() {
       #else
         if (mqttClient.connect(MQTT_CLIENT)) {                                            
       #endif
-        Serial.println("MQTT connected!"); 
+        Serial.println("MQTT connected!");
+                                                                                    // topics to subscribe
+        mqttSubscribe(MQTT_TOPIC_EXAMPLE_CALLBACK);
       } else {                                                                      
         Serial.printf("MQTT connection attempt failed (rc= %d), reconnect in %d seconds\n", mqttClient.state(), MQTT_RECONNECT_TIME_INTERVAL / 1000);
         runtime = millis();
@@ -89,8 +91,8 @@ void callback(char* topic, byte* message, unsigned int length) {
     }
 
                                                                                     // topic callback handler
-    if(!strcmp(topic, MQTT_TOPIC_EXAMPLE)){                                      
-      mqttPublish(MQTT_TOPIC_EXAMPLE_CALLBACK, "ok", MQTT_MESSAGE_RETAIN_FALSE); 
+    if(!strcmp(topic, MQTT_TOPIC_EXAMPLE_CALLBACK)){                                      
+      mqttPublish(MQTT_TOPIC_EXAMPLE, "41", MQTT_MESSAGE_RETAIN_FALSE); 
     }
   }
   else {

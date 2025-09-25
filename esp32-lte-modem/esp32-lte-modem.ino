@@ -11,12 +11,15 @@
 #define HTTP_SERVER             "example.com"
 #define HTTP_PORT               80
 #define HTTP_RESOURCE           "/"
+#define LOOP_DELAY              15000
 
 // ========== LIBRARIES =======================
 #include "modem.h"
+#include "mqttclient.h"
 #include <ArduinoHttpClient.h>
 
 // ========== global variables ================
+uint32_t runtime = 0;
 
 // ========== objects =========================
 HttpClient http(gsmClient, HTTP_SERVER, HTTP_PORT);
@@ -28,36 +31,59 @@ void setup(){
   delay(10);
 
   modemSetup();
+  mqttSetup();
+  modemConnect();
 }
 
 // ========== MAIN CODE =======================
 void loop(){
 
-  modemConnect();
+  mqttConnect();
   
-  Serial.print("HTTP GET request... ");
-  uint16_t err = http.get(HTTP_RESOURCE);
-  if (err != 0) {
-    Serial.print("GET request failed: ");
-    Serial.println(err);
-    delay(10000);
-    return;
+  if(millis() - runtime > LOOP_DELAY){    
+
+    // ========================================
+    //          HTTP request example
+    // ========================================
+    //  Serial.print("HTTP GET request... ");
+    //  uint16_t err = http.get(HTTP_RESOURCE);
+    //  if (err != 0) {
+    //    Serial.print("GET request failed: ");
+    //    Serial.println(err);
+    //    delay(10000);
+    //    return;
+    //  }
+    //
+    //  uint16_t status = http.responseStatusCode();
+    //  Serial.print("Status: ");
+    //  Serial.println(status);
+    //
+    //  String body = http.responseBody();
+    //  Serial.println("Response:");
+    //  Serial.println(body);
+    //
+    //  http.stop();
+    //  Serial.println("Connection closed!");
+  
+    mqttPublish(MQTT_TOPIC_EXAMPLE, "555", MQTT_MESSAGE_RETAIN_FALSE);
+    
+    // ========================================
+    //          Modem reset test
+    // ========================================
+     modemPowerOff();
+     delay(5000);
+     modemPowerOn();
+     modemConnect();
+    
+    mqttPublish(MQTT_TOPIC_EXAMPLE, "741", MQTT_MESSAGE_RETAIN_FALSE);
+
+    // ========================================
+    //          Modem disconnect
+    // ========================================
+    // modemDisconnect();
+    
+    runtime = millis();
   }
-
-  uint16_t status = http.responseStatusCode();
-  Serial.print("Status: ");
-  Serial.println(status);
-
-  String body = http.responseBody();
-  Serial.println("Response:");
-  Serial.println(body);
-
-  http.stop();
-  Serial.println("Connection closed!");
-
-  modemDisconnect();
-  
-  while (true) {delay(1000);}
 }
 
 // ========== SOURCES =========================
