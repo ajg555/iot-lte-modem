@@ -2,19 +2,9 @@
 // ========== LIBRARIES =======================
 #include "modem.h"
 
-// ========== objects =========================
+// ========== OBJECTS =========================
 TinyGsm modem(SerialModem);
 TinyGsmClient modemClient(modem);
-
-// ========== objects =========================
-#if MODEM_NETWORK_MODE == MODEM_CONNECTION_TINY_GSM
-  TinyGsm modem(SerialModem);
-  TinyGsmClient modemClient(modem);
-#endif
-#if MODEM_NETWORK_MODE == MODEM_CONNECTION_PPP
-  NetworkClient modemClient;
-#endif
-
 
 // ========== FUNC. IMPLEMENTATION ============
 void modemConnect(){

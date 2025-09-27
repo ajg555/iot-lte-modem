@@ -51,9 +51,9 @@
 #include<PubSubClient.h>
 #include<string.h>
 
-// ========== objects =========================
+// ========== OBJECTS =========================
 
-// ========== function prototypes =============
+// ========== FUNCTION PROTOTYPES =============
 void callback(char* topic, byte* message, unsigned int length);       
 void mqttSetup();                                                     
 void mqttSubscribe(char *topic);

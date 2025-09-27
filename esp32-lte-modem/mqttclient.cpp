@@ -1,13 +1,13 @@
 
-// ========== INCLUSAO DAS BIBLIOTECAS =======
+// ========== LIBRARIES =======================
 #include "mqttclient.h"
 
-// ========== Variaveis globais =============
-PubSubClient mqttClient(MQTT_SERVER, MQTT_PORT, callback, gsmClient);               // callback: mqtt topic's receive messages
+// ========== objects =========================
+PubSubClient mqttClient(MQTT_SERVER, MQTT_PORT, callback, modemClient);               // callback: mqtt topic's receive messages
 
-// ========== inicializacao das vars ========
+// ========== global variables ================
 
-// ========== Desenvolv. das funcoes ========
+// ========== FUNC. IMPLEMENTATION ============
 void mqttSetup() {
   mqttClient.setServer(MQTT_SERVER, MQTT_PORT);                                       
   mqttClient.setCallback(callback);                                                   

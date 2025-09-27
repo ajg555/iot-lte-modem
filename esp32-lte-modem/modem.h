@@ -29,15 +29,8 @@
 #endif
 
 // ========== MODEM SETUP =====================
-
-#if MODEM_NETWORK_MODE == MODEM_CONNECTION_TINY_GSM
-  #define TINY_GSM_MODEM_SIM7600
-  #define TINY_GSM_RX_BUFFER        1024
-#endif
-#if MODEM_NETWORK_MODE == MODEM_CONNECTION_PPP
-  #define PPP_MODEM_FC              ESP_MODEM_FLOW_CONTROL_NONE
-  #define PPP_MODEM_MODEL           PPP_MODEM_GENERIC
-#endif
+#define TINY_GSM_MODEM_SIM7600
+#define TINY_GSM_RX_BUFFER        1024
 #define MODEM_UART_READY_TIME_MS  12
 #define MODEM_GPIO_PWR_TON_MS     100
 #define MODEM_GPIO_PWR_TOFF_MS    2600                  // 2500ms from manual + 100ms for safety       
@@ -74,23 +67,13 @@
 
 // ========== LIBRARIES =======================
 #include <Arduino.h>
-#if MODEM_NETWORK_MODE == MODEM_CONNECTION_TINY_GSM
-  #include <TinyGsmClient.h>
-#endif
-#if MODEM_NETWORK_MODE == MODEM_CONNECTION_PPP
-  #include <PPP.h>
-#endif
+#include <TinyGsmClient.h>
   
-// ========== objects =========================
-#if MODEM_NETWORK_MODE == MODEM_CONNECTION_TINY_GSM
-  extern TinyGsm modem;
-  extern TinyGsmClient modemClient;
-#endif
-#if MODEM_NETWORK_MODE == MODEM_CONNECTION_PPP
-  extern NetworkClient modemClient;
-#endif
+// ========== OBJECTS =========================
+extern TinyGsm modem;
+extern TinyGsmClient modemClient;
 
-// ========== function prototypes =============
+// ========== FUNCTION PROTOTYPES =============
 void modemConnect();
 void modemDisconnect();
 void modemPowerOn();

@@ -18,14 +18,14 @@
 #include "mqttclient.h"
 #include <ArduinoHttpClient.h>
 
-// ========== global variables ================
+// ========== GLOBAL VARIABLES ================
 uint32_t runtime = 0;
 
-// ========== objects =========================
-HttpClient http(gsmClient, HTTP_SERVER, HTTP_PORT);
+// ========== OBJECTS =========================
+HttpClient http(modemClient, HTTP_SERVER, HTTP_PORT);
 
 
-// ========== initial setup ===================
+// ========== INITIAL SETUP ===================
 void setup(){
   Serial.begin(115200);
   delay(10);
