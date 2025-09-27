@@ -64,6 +64,7 @@ void mqttPublish(char *topic, char *payload, uint8_t retain) {
   if (retain == MQTT_MESSAGE_RETAIN_TRUE)
     messageRetain = MQTT_MESSAGE_RETAIN_TRUE;
 
+  mqttConnect();                                                                    // will check if MQTT is connected
   mqttClient.publish(topic, payload, messageRetain);
   Serial.printf("MQTT sending message (RETAIN FLAG: %d):\n\tTopic: %s\n\tPayload: %s\n", messageRetain, topic, payload);
 }
