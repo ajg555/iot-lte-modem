@@ -4,7 +4,16 @@
 
 // ========== objects =========================
 TinyGsm modem(SerialModem);
-TinyGsmClient gsmClient(modem);
+TinyGsmClient modemClient(modem);
+
+// ========== objects =========================
+#if MODEM_NETWORK_MODE == MODEM_CONNECTION_TINY_GSM
+  TinyGsm modem(SerialModem);
+  TinyGsmClient modemClient(modem);
+#endif
+#if MODEM_NETWORK_MODE == MODEM_CONNECTION_PPP
+  NetworkClient modemClient;
+#endif
 
 
 // ========== FUNC. IMPLEMENTATION ============
@@ -18,6 +27,7 @@ void modemConnect(){
     delay(1000);
   }
   Serial.println(" ok");
+  modemNetworkStatus();
 }
 
 void modemDisconnect(){
@@ -30,6 +40,11 @@ void modemGpioInit(){
   digitalWrite(MODEM_PIN_PWR, LOW);
   pinMode(MODEM_PIN_SLEEP, OUTPUT);
   digitalWrite(MODEM_PIN_PWR, LOW);
+}
+
+void modemInfo(){
+  Serial.print("Modem Info: ");
+  Serial.println(modem.getModemInfo());
 }
 
 void modemPowerOn() {
@@ -51,6 +66,24 @@ void modemForceRestart(){                                       // soft restart 
   digitalWrite(MODEM_PIN_PWR, LOW);
   delay(MODEM_GPIO_RESET_TOFF_MS);
   digitalWrite(MODEM_PIN_PWR, HIGH);
+}
+
+void modemNetworkStatus(){
+  Serial.println("Modem Status: ");
+  Serial.print("\tIP: ");
+  Serial.println(modem.localIP());
+
+  Serial.print("\tIMSA: ");
+  Serial.println(modem.getIMSI());
+
+  Serial.print("\tCCID: ");
+  Serial.println(modem.getSimCCID());
+
+  Serial.print("\tISP Operator:");
+  Serial.println(modem.getOperator());
+
+  Serial.print("\tCSQ: ");
+  Serial.println(modem.getSignalQuality());
 }
 
 void modemSleepOn(){
@@ -75,8 +108,7 @@ void modemSetup(){
   modem.restart();
   // modem.init();
 
-  Serial.print("Modem Info: ");
-  Serial.println(modem.getModemInfo());
+  modemInfo();
 
   if (SIM_PIN && modem.getSimStatus() != 3) {
     modem.simUnlock(SIM_PIN);
